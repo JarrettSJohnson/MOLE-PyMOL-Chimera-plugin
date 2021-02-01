@@ -1,4 +1,4 @@
-# MOLE-PyMOL-plugin
+# MOLE PyMOL/Chimera plugin
 
 This is [MOLE2.5](https://webchem.ncbr.muni.cz/Platform/App/Mole) plugin for Pymol/Chimera macromolecular visualiyation systems. There is also a [web version](https://mole.upol.cz/) available.
 
@@ -16,10 +16,10 @@ Update of the plugin to support Python 3.x and ChimeraX is ongoing.
 
 ## How to use it?
 
-Please consult the [manual](https://webchem.ncbr.muni.cz/Wiki/Mole:Plugins) to see how to install the software and how to work with it.
+Please consult the [manual](https://webchem.ncbr.muni.cz/Wiki/Mole:Plugins) to see how to install the software and how to use it.
 ### Acknowledgement
 
-* Ondřej Balcárek - Upgrade of the plugin to support version 2.5, Chimera support
+* Ondřej Balcárek - Upgrade of the plugin to support MOLE 2.5, Chimera support
 
 ### Citation
 
