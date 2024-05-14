@@ -192,11 +192,11 @@ class Manager():
             if len(active_sites) < 1:
                 mole_object.when_error('', 'No active sites found for the \'' + csa_structure + '\'')
 
-        except Exception, e:
+        except Exception as e:
             mole_object.when_error('',
                                    'An error occurred during the processing of CSA file. Did you provide it in a '
                                    'correct format?')
-            print e
+            print(e)
             return
 
     def construct_params_and_run(self, mole_object, param):
@@ -503,7 +503,7 @@ class Manager():
             t.start()
             t.join()
 
-        except Exception, e:
+        except Exception as e:
             mole_object.when_error('',
                                    'An error occurred during processing. If this problem persists and you are a non-windows '
                                    'user try installing \'mono-devel\' package. If it does not help, please send the text '

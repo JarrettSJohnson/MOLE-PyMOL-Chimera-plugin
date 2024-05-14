@@ -1,19 +1,11 @@
 # coding=utf-8
-from __future__ import division
-from __future__ import generators
 
 import os
-from Tkinter import *
-import distutils.spawn  # used for find_executable
 import sys
-from xml.dom.minidom import Document, parse
-import imp
+from xml.dom.minidom import parse
+from importlib.util import spec_from_file_location, module_from_spec
 from datetime import datetime
-import tkFileDialog
-import tkMessageBox
 import pickle
-import Pmw
-import urllib2
 import urllib
 import time
 import random
@@ -29,63 +21,82 @@ import Manager
 try:
     from PymolPlugin import PymolPlugin as plugin
     PLUGIN = "PyMOL"
+    from pymol.Qt import QtCore, QtWidgets
+    Qt = QtCore.Qt
 
 except:
     import chimera
     from ChimeraPlugin import ChimeraPlugin as plugin
     PLUGIN = "Chimera"
+    from PyQt5 import QtCore, QtWidgets
 
 # Globals:
 CONFIGFILE = '.MOLE_PluginSettings.txt'
 
 
-class MainWindow:
+class MainDialog(QtWidgets.QDialog):
     name = "MOLE 2.5"
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.plugin_type = PLUGIN
 
-        root = Toplevel()
-        root.title('MOLE 2.5')
-        root.resizable(0, 0)
-        self.parent = root
+        self.setWindowTitle('MOLE 2.5')
+        #self.setFixedSize(self.size()) # ??
+        layout = QtWidgets.QVBoxLayout(self)
 
         # region Create Frame and NoteBook
-        self.mainframe = Frame(self.parent, width=463, height=623)
-        self.mainframe.pack(fill='both', expand=1)
-        self.mainframe.bind('<<WrongExecutable>>',
-                            lambda e: self.when_error(e, 'Your MOLE 2.0 executable was not found!'))
-        root.bind('<F5>', (lambda event: self.set_structures(
-            self.input_structure_box)))
-        balloon = Pmw.Balloon(self.mainframe)
+        #self.mainframe = Frame(self.parent, width=463, height=623)
+        self.mainframe = QtWidgets.QFrame()
+        layout.addWidget(self.mainframe)
+        #self.mainframe.pack(fill='both', expand=1)
+
+        # TODO: Set wrong executable event
+        #self.mainframe.bind('<<WrongExecutable>>',
+        #                    lambda e: self.when_error(e, 'Your MOLE 2.0 executable was not found!'))
+        #root.bind('<F5>', (lambda event: self.set_structures(
+        #    self.input_structure_box)))
+        # TODO: Set tooltip balloon = Pmw.Balloon(self.mainframe)
 
         self.points = {}
         # Binary file, Working directory, csa file
         self.main_parameters = ['', '', '']
 
-        self.notebook = Pmw.NoteBook(self.mainframe)
-        self.notebook.pack(fill='both', expand=1, padx=10, pady=10)
+        #self.notebook = Pmw.NoteBook(self.mainframe)
+        self.notebook = QtWidgets.QTabWidget()
+        layout.addWidget(self.notebook)
+        #self.notebook.pack(fill='both', expand=1, padx=10, pady=10)
         # endregion
 
         # region self.mainPage / settings
-        self.mainpage = self.notebook.add('Compute Tunnels')
-        self.mainpage.focus_set()
+        self.mainpage = QtWidgets.QWidget()
+        mainpage_layout = QtWidgets.QVBoxLayout(self.mainpage)
+        self.notebook.addTab(self.mainpage, 'Compute Tunnels')
+        self.mainpage.setFocus()
 
-        input_structure_group = Pmw.Group(
-            self.mainpage, tag_text='Specify Input Structure')
-        input_structure_group.pack(fill='both')
+        input_structure_group = QtWidgets.QGroupBox('Specify Input Structure')
+        input_structure_group_layout = QtWidgets.QVBoxLayout(input_structure_group)
+        mainpage_layout.addWidget(input_structure_group)
+        #input_structure_group.pack(fill='both')
 
-        starting_point_group = Pmw.Group(
-            self.mainpage, tag_text='Specify Starting Point')
-        starting_point_group.pack(fill='both')
+        starting_point_group = QtWidgets.QGroupBox('Specify Starting Point')
+        mainpage_layout.addWidget(starting_point_group)
+        #starting_point_group.pack(fill='both')
 
         if self.plugin_type == "PyMOL":
             initialized_structs = ('all',) + plugin.return_tuple_objects()
         else:
             initialized_structs = ()
 
-        self.input_structure_box = Pmw.ScrolledListBox(input_structure_group.interior(), items=initialized_structs,
-                                                       labelpos='nw', listbox_height=4, listbox_selectmode=EXTENDED,)
+        #self.input_structure_box = Pmw.ScrolledListBox(input_structure_group.interior(), items=initialized_structs,
+        #                                               labelpos='nw', listbox_height=4, listbox_selectmode=EXTENDED,)
+        self.input_structure_box = QtWidgets.QListWidget()
+        self.input_structure_box.addItems(initialized_structs)
+        self.input_structure_box.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        input_structure_group_layout.addWidget(self.input_structure_box)
+
+        self.show()
+        return
         self.input_structure_box.component('listbox').configure(
             exportselection=0, background='white')
         self.input_structure_box.pack(fill='both', expand=0, padx=10, pady=5)
@@ -548,6 +559,10 @@ class MainWindow:
 
         self.original_view = None
 
+    def keyPressEvent(self, event: QtCore.QEvent):
+        if event.key() == Qt.Key_F5:
+            self.set_structures(self.input_structure_box)
+
     def add_point(self, listbox):
         """
         Run add_point window.
@@ -590,7 +605,7 @@ class MainWindow:
 
         for i in self.points.keys():
 
-            if i not in listbox.getvalue() or i[4:5] is '|':
+            if i not in listbox.getvalue() or i[4:5] == '|':
                 p[i] = self.points[i]
 
         self.points = p
@@ -676,7 +691,7 @@ class MainWindow:
         :param param:
         :return:
         """
-        if param is 'tunnels':
+        if param == 'tunnels':
             self.compute_tunnels_button.config(text='Compute Tunnels')
 
         else:
@@ -779,7 +794,7 @@ class MainWindow:
                 if extension == '.pdb':
                     plugin().parse_PDB_channel(chan_file, name)
 
-            except Exception, e:
+            except Exception as e:
                 print(e)
 
     @staticmethod
@@ -794,7 +809,7 @@ class MainWindow:
         # \S is non white space
 
         # split filenames string up into a proper python list
-        result = re.findall("{.*?}|\S+", filenames)
+        result = re.findall(r"{.*?}|\S+", filenames)
 
         # remove any {} characters from the start and end of the file names
         result = [re.sub("^{|}$", "", i) for i in result]
@@ -812,8 +827,12 @@ class MainWindow:
         if os.path.exists(script_path):
 
             previous = plugin.return_object_list()
-            imp.load_source(
+            spec = spec_from_file_location(
                 structure + str(datetime.now().toordinal()), script_path)
+            module = module_from_spec(spec)
+            spec.loader.exec_module(module)
+            #imp.load_source(
+            #    structure + str(datetime.now().toordinal()), script_path)
 
             for o in plugin.return_object_list():
 
@@ -872,7 +891,7 @@ class MainWindow:
 
         query = self.strip_white(self.query_entry.get())
         query_page = 'http://webchem.ncbr.muni.cz/Platform/PatternQuery/ValidateQuery?query=' + query
-        query_page = urllib2.quote(query_page, ':/' + '?' + '=')
+        query_page = urllib.parse.quote(query_page, ':/' + '?' + '=')
         data_response = False
         tries = 0
         limit = 5
@@ -880,10 +899,10 @@ class MainWindow:
         while tries < limit:
 
             try:
-                req = urllib2.Request(query_page)
-                response = urllib2.urlopen(req, None, 5)
+                req = urllib.request.Request(query_page)
+                response = urllib.request.urlopen(req, None, 5)
 
-            except urllib2.HTTPError, e:
+            except urllib.error.HTTPError as e:
                 if e.code == 404:
                     self.when_error('', "Could not find server!")
 
@@ -891,11 +910,11 @@ class MainWindow:
                     time.sleep(random.randint(1, 2))  # sleep 1-2 seconds
                     tries += 1
 
-            except urllib2.URLError, e:
+            except urllib.error.URLError as e:
                 time.sleep(random.randint(1, 2))  # sleep 1-2 seconds
                 tries += 1
 
-            except socket.timeout, e:
+            except socket.timeout as e:
                 time.sleep(random.randint(1, 2))  # sleep 1-2 seconds
                 tries += 1
 
@@ -939,7 +958,7 @@ class MainWindow:
         lst = text.split('"')
         for i, item in enumerate(lst):
             if not i % 2:
-                lst[i] = re.sub("\s+", "", item)
+                lst[i] = re.sub(r"\s+", "", item)
         return str('"'.join(lst))
 
     def __del__(self):
@@ -952,3 +971,12 @@ if PLUGIN == "Chimera":
     icon = os.path.join(dir, 'molelogo.png')
     chimera.tkgui.app.toolbar.add(
         icon, lambda d=chimera.dialogs.display, n=MainWindow.name: d(n), 'MOLE 2.5', None)
+
+########## DEBUG ##########
+
+if __name__ == '__main__':
+    app = QtWidgets.QApplication([])
+    window = QtWidgets.QMainWindow()
+    app.setActiveWindow(window)
+    widget = MainDialog(window)
+    app.exec_()

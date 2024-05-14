@@ -1,6 +1,4 @@
-from pymol import cmd, selector
-from pymol.cmd import _feedback, fb_module, fb_mask, is_list, _cmd
-from pymol.cgo import *
+from pymol import cmd
 from chempy import Bond, Atom
 from chempy.models import Indexed
 from chempy import Bond, Atom

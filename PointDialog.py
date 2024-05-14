@@ -1,10 +1,7 @@
-import Pmw
-from Tkinter import *
-import tkMessageBox
 try:
     import PymolPlugin
     PLUGIN = "PyMOL"
-    from pymol.cgo import *
+    from pymol.Qt import QtWidgets
 
 except(NameError, ImportError):
     import ChimeraPlugin
@@ -12,27 +9,32 @@ except(NameError, ImportError):
     import re
 
 
-class PointDialog(Pmw.Dialog):
+class PointDialog(QtWidgets.QDialog):
     """Creates point dialog for adding starting or end point"""
 
-    def __init__(self, mole_object,parent=None, **kw):
+    def __init__(self, mole_object, *args, **kwargs):
 
         # Initialise base class (after defining options).
-        Pmw.Dialog.__init__(self, parent, command=self.return_to_mainwindow)
+        super().__init__(self, *args, **kwargs)
+
+        self.button = QtWidgets.QPushButton("OK", self)
+        self.button.clicked.connect(self.return_to_mainwindow)
 
         self.plugin_type = PLUGIN
         self.CSA = ''
-        if kw.has_key('CSA'):
-            self.CSA = kw['CSA']
+        if kwargs.has_key('CSA'):
+            self.CSA = kwargs['CSA']
 
         self.point_name = 'Point007'
 
-        if kw.has_key('PointName'):
-            self.point_name = kw['PointName']
+        if kwargs.has_key('PointName'):
+            self.point_name = kwargs['PointName']
 
         self.structure = ''
-        if kw.has_key('Structure'):
-            self.structure = kw['Structure']
+        if kwargs.has_key('Structure'):
+            self.structure = kwargs['Structure']
+
+        return
 
         # Create the components.
         interior = self.interior()
@@ -155,22 +157,22 @@ class PointDialog(Pmw.Dialog):
         """
         if mole_object.plugin_type == "PyMOL":
             obj = [
-                LINEWIDTH, 3,
+                cgo.LINEWIDTH, 3,
 
-                BEGIN, LINE_STRIP,
-                VERTEX, float(float(self.point_x.get()) - 0.5), float(self.point_y.get()), float(self.point_z.get()),
-                VERTEX, float(float(self.point_x.get()) + 0.5), float(self.point_y.get()), float(self.point_z.get()),
-                END,
+                cgo.BEGIN, cgo.LINE_STRIP,
+                cgo.VERTEX, float(float(self.point_x.get()) - 0.5), float(self.point_y.get()), float(self.point_z.get()),
+                cgo.VERTEX, float(float(self.point_x.get()) + 0.5), float(self.point_y.get()), float(self.point_z.get()),
+                cgo.END,
 
-                BEGIN, LINE_STRIP,
-                VERTEX, float(self.point_x.get()), float(float(self.point_y.get()) - 0.5), float(self.point_z.get()),
-                VERTEX, float(self.point_x.get()), float(float(self.point_y.get()) + 0.5), float(self.point_z.get()),
-                END,
+                cgo.BEGIN, cgo.LINE_STRIP,
+                cgo.VERTEX, float(self.point_x.get()), float(float(self.point_y.get()) - 0.5), float(self.point_z.get()),
+                cgo.VERTEX, float(self.point_x.get()), float(float(self.point_y.get()) + 0.5), float(self.point_z.get()),
+                cgo.END,
 
-                BEGIN, LINE_STRIP,
-                VERTEX, float(self.point_x.get()), float(self.point_y.get()), float(float(self.point_z.get()) - 0.5),
-                VERTEX, float(self.point_x.get()), float(self.point_y.get()), float(float(self.point_z.get()) + 0.5),
-                END
+                cgo.BEGIN, cgo.LINE_STRIP,
+                cgo.VERTEX, float(self.point_x.get()), float(self.point_y.get()), float(float(self.point_z.get()) - 0.5),
+                cgo.VERTEX, float(self.point_x.get()), float(self.point_y.get()), float(float(self.point_z.get()) + 0.5),
+                cgo.END
 
             ]
 
