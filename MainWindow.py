@@ -95,50 +95,79 @@ class MainDialog(QtWidgets.QDialog):
         self.input_structure_box.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         input_structure_group_layout.addWidget(self.input_structure_box)
 
-        self.show()
-        return
-        self.input_structure_box.component('listbox').configure(
-            exportselection=0, background='white')
-        self.input_structure_box.pack(fill='both', expand=0, padx=10, pady=5)
-        balloon.bind(self.input_structure_box,
-                     'Select one or more structures in which you want to find channels.')
+        self.input_structure_box.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.input_structure_box.setStyleSheet("background-color: white;")
+        #self.input_structure_box.component('listbox').configure(
+        #    exportselection=0, background='white')
+        #self.input_structure_box.pack(fill='both', expand=0, padx=10, pady=5)
+        #balloon.bind(self.input_structure_box,
+        #             'Select one or more structures in which you want to find channels.')
+        self.input_structure_box.setToolTip('Select one or more structures in which you want to find channels.')
 
         if self.plugin_type == "Chimera":
-            self.input_structure_box.insert('end', 'all')
+            #self.input_structure_box.insert('end', 'all')
+            self.input_structure_box.addItem('all')
 
             if plugin.return_object_list() is not None:
 
                 for item in plugin.return_object_list():
-                    self.input_structure_box.insert('end', item)
+                    #self.input_structure_box.insert('end', item)
+                    self.input_structure_box.addItem(item)
 
-        query = Pmw.Group(input_structure_group.interior(),
-                          tag_text="Not Active Residues")
-        query.pack(fill='both')
-        self.query_entry = Entry(query.interior(), width=65)
-        self.query_entry.config(background='white')
-        self.query_entry.grid(column=0, row=0, padx=10,
-                              pady=5, sticky=W + E + N + S)
-        self.query_entry.columnconfigure(0, minsize=65)
-        self.query_entry.bind(
-            "<KeyRelease>", lambda event: root.after(2500, self.validate_query))
-        self.query_entry.bind('<Control-KeyRelease-a>',
-                              lambda event: self.select_all_query_entry())
-        self.query_entry.focus_set()
+        #query = Pmw.Group(input_structure_group.interior(),
+        #                  tag_text="Not Active Residues")
+        query = QtWidgets.QGroupBox('Not Active Residues')
+        input_structure_group_layout.addWidget(query)
 
-        balloon.bind(self.query_entry, 'Input not active residues here')
+        #query.pack(fill='both')
+        #self.query_entry = Entry(query.interior(), width=65)
+        self.query_entry = QtWidgets.QLineEdit()
+        query_layout = QtWidgets.QVBoxLayout(query)
+        query_layout.addWidget(self.query_entry)
+        #self.query_entry.config(background='white')
+        self.query_entry.setStyleSheet("background-color: white;")
 
-        self.query_label = Label(query.interior(),
-                                 text='Select atoms/residues not to be included in the calculation using PatternQuery '
-                                      'syntax.', width=68)
-        self.query_label.grid(column=0, row=1, padx=10,
-                              pady=5, sticky=W + E + N + S, columnspan=2)
-        self.query_help = Label(
-            query.interior(), text='?', fg="blue", cursor="hand2")
-        self.query_help.grid(column=1, row=0, padx=[0, 10], pady=5)
-        self.query_help.bind("<Button-1>", lambda event: webbrowser.open_new("https://webchem.ncbr.muni.cz/Wiki"
-                                                                             "/PatternQuery:UserManual"))
-        balloon.bind(self.query_help, 'PatternQuery Wiki pages.')
+        # TODO: what is this grid thing?? [0, 0]
+        # self.query_entry.grid(column=0, row=0, padx=10,
+        #                       pady=5, sticky=W + E + N + S)
+        #self.query_entry.columnconfigure(0, minsize=65)
+        #self.query_entry.bind(
+            #"<KeyRelease>", lambda event: root.after(2500, self.validate_query))
+        self.query_entry.textChanged.connect(self.validate_query)
+        #self.query_entry.bind('<Control-KeyRelease-a>',
+        #                      lambda event: self.select_all_query_entry())
+        #self.query_entry.focus_set()
+
+        #balloon.bind(self.query_entry, 'Input not active residues here')
+        self.query_entry.setToolTip('Input not active residues here')
+
+        self.query_label = QtWidgets.QLabel('Select atoms/residues not to be included in the calculation using PatternQuery syntax')
+        query_layout.addWidget(self.query_label)
+
+
+        # TODO Grid # TODO GRID [1, 0]
+        #self.query_label.grid(column=0, row=1, padx=10,
+        #                      pady=5, sticky=W + E + N + S, columnspan=2)
+
+
+        #self.query_help = Label(
+        #    query.interior(), text='?', fg="blue", cursor="hand2")
+        #self.query_help.grid(column=1, row=0, padx=[0, 10], pady=5)
+        #self.query_help.bind("<Button-1>", lambda event: webbrowser.open_new("https://webchem.ncbr.muni.cz/Wiki"
+
+        self.query_help = QtWidgets.QPushButton('?')
+        query_layout.addWidget(self.query_help)
+        self.query_help.setStyleSheet("color: blue;")
+        self.query_help.setCursor(QtCore.Qt.PointingHandCursor)
+        self.query_help.clicked.connect(lambda: webbrowser.open_new("https://webchem.ncbr.muni.cz/Wiki/PatternQuery:UserManual"))
+        # TODO GRID [0, 1]
+        
+
+        #balloon.bind(self.query_help, 'PatternQuery Wiki pages.')
+        self.query_help.setToolTip('PatternQuery Wiki pages.')
         self.is_valid = False
+        self.show()
+        return
 
         self.start_points_box = Pmw.ScrolledListBox(starting_point_group.interior(), items=(), labelpos='nw',
                                                     listbox_height=4, listbox_selectmode=EXTENDED)
